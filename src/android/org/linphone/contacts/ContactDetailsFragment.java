@@ -46,6 +46,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.content.Intent;
+import android.net.Uri;
 
 public class ContactDetailsFragment extends Fragment implements OnClickListener {
 	private LinphoneContact contact;
@@ -91,6 +93,19 @@ public class ContactDetailsFragment extends Fragment implements OnClickListener 
 					}
 				}
 			}
+		}
+	};
+
+	private OnClickListener inviteListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			String number = (String)v.getTag();
+			Intent smsIntent = new Intent(Intent.ACTION_VIEW);
+			smsIntent.putExtra("address"  , number);
+			smsIntent.setData(Uri.parse("smsto:"));
+			smsIntent.putExtra("sms_body", "Hello! Join me on Linphone! You can download it at: http://www.linphone.org/technical-corner/linphone/downloads");
+			smsIntent.setType("vnd.android-dir/mms-sms");
+			startActivity(smsIntent);
 		}
 	};
 
@@ -174,6 +189,13 @@ public class ContactDetailsFragment extends Fragment implements OnClickListener 
 
 		TableLayout controls = view.findViewById(R.id.controls);
 		controls.removeAllViews();
+		boolean hasSipAddress = false;
+		for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
+			if (noa.isSIPAddress()) {
+				hasSipAddress = true;
+				break;
+			}
+		}
 		for (LinphoneNumberOrAddress noa : contact.getNumbersOrAddresses()) {
 			boolean skip = false;
 			View v = inflater.inflate(R.layout.contact_control_row, null);
@@ -188,6 +210,11 @@ public class ContactDetailsFragment extends Fragment implements OnClickListener 
 			} else {
 				label.setText(R.string.phone_number);
 				skip |= getResources().getBoolean(R.bool.hide_contact_phone_numbers);
+				if (!hasSipAddress) {
+					v.findViewById(R.id.sms_invite).setOnClickListener(inviteListener);
+					v.findViewById(R.id.sms_invite).setTag(noa.getValue());
+					v.findViewById(R.id.sms_invite).setVisibility(View.VISIBLE);
+				}
 			}
 
 			TextView tv = v.findViewById(R.id.numeroOrAddress);
