@@ -19,6 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -77,6 +78,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -790,6 +792,30 @@ public final class LinphoneUtils {
             LinphoneManager.getInstance().getMediaScanner().scanFile(file);
         }
         return storageDir;
+    }
+
+    public static String getRecordingsDirectory(Context mContext) {
+        String recordingsDir = Environment.getExternalStorageDirectory() + "/" + mContext.getString(mContext.getResources().getIdentifier("app_name", "string", mContext.getPackageName())) + "/recordings";
+        File file = new File(recordingsDir);
+        if (!file.isDirectory() || !file.exists()) {
+            Log.w("Directory " + file + " doesn't seem to exists yet, let's create it");
+            file.mkdirs();
+            LinphoneManager.getInstance().getMediaScanner().scanFile(file);
+        }
+        return recordingsDir;
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    public static String getCallRecordingFilename(Context context, Address address) {
+        String fileName = getRecordingsDirectory(context) + "/";
+
+        String name = address.getDisplayName() == null ? address.getUsername() : address.getDisplayName();
+        fileName += name + "_";
+
+        DateFormat format = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+        fileName += format.format(new Date()) + ".mkv";
+
+        return fileName;
     }
 
     public static void hideKeyboard(Activity activity) {
